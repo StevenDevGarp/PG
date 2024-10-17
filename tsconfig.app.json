@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./src", 
+    "paths": {
+      "@components/*": ["components/*"],         // Aquí defines el alias para '@components'
+      "@utils/*": ["utils/*"],                   // Puedes agregar otros alias si es necesario
+      "@assets/*": ["assets/*"]                  // Alias para assets si lo necesitas
+    },
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"]
+}
