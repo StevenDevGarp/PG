@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 // Definimos los tipos de props para cada componente
 type TabsProps = {
   children: React.ReactNode;
-  onValueChange: string;
+  defaultValue: string;
   className?: string;
 };
 
@@ -24,8 +24,8 @@ type TabsContentProps = {
   children: React.ReactNode;
 };
 
-export function Tabs({ children, onValueChange, className }: TabsProps) {
-  const [activeTab, setActiveTab] = useState(onValueChange);
+export function Tabs({ children, defaultValue, className }: TabsProps) {
+  const [activeTab, setActiveTab] = useState(defaultValue);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);

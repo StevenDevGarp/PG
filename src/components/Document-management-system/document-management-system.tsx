@@ -7,27 +7,13 @@ import { BarChart, FileText, Folder, Users, Sun, Moon, FilePlus  } from "lucide-
 import { Link } from 'react-router-dom'
 
 const documents = [
-  { id: 1, title: "Informe Q1.pdf", created: "2023-04-01", modified: "2023-04-15", type: "pdf", content: "This is a PDF document content.", versions: [
-    { version: "1.0", date: "2023-04-01" },
-    { version: "1.1", date: "2023-04-10" },
-    { version: "1.2", date: "2023-04-15" },
-  ]},
-  { id: 2, title: "Presupuesto 2023.xlsx", created: "2023-03-20", modified: "2023-04-02", type: "xlsx", content: "This is an Excel document content.", versions: [
-    { version: "1.0", date: "2023-03-20" },
-    { version: "1.1", date: "2023-04-02" },
-  ]},
-  { id: 3, title: "Contrato.docx", created: "2023-04-01", modified: "2023-04-02", type: "docx", content: "This is a Word document content.", versions: [
-    { version: "1.0", date: "2023-04-01" },
-    { version: "1.1", date: "2023-04-02" },
-  ]},
-  { id: 4, title: "Datos.csv", created: "2023-05-01", modified: "2023-05-02", type: "csv", content: "id,name,value\n1,John,100\n2,Jane,200", versions: [
-    { version: "1.0", date: "2023-05-01" },
-    { version: "1.1", date: "2023-05-02" },
-  ]},
-  { id: 5, title: "Notas.txt", created: "2023-05-10", modified: "2023-05-10", type: "txt", content: "This is a plain text document.", versions: [
-    { version: "1.0", date: "2023-05-10" },
-  ]},
+  { id: 1, title: "Informe Q1.pdf", created: "2023-04-01", modified: "2023-04-15", type: "pdf", content: "This is a PDF document content." },
+  { id: 2, title: "Presupuesto 2023.xlsx", created: "2023-03-20", modified: "2023-04-02", type: "xlsx", content: "This is an Excel document content." },
+  { id: 3, title: "Contrato.docx", created: "2023-04-01", modified: "2023-04-02", type: "docx", content: "This is a Word document content." },
+  { id: 4, title: "Datos.csv", created: "2023-05-01", modified: "2023-05-02", type: "csv", content: "id,name,value\n1,John,100\n2,Jane,200" },
+  { id: 5, title: "Notas.txt", created: "2023-05-10", modified: "2023-05-10", type: "txt", content: "This is a plain text document." },
 ]
+
 
 interface Document {
   id: number;
@@ -36,13 +22,12 @@ interface Document {
   modified: string;
   type: string;
   content: string;
-  versions: Array<{version: string, date: string}>;
 }
+
 
 export default function DocumentManagementSystem() {
   const [darkMode, setDarkMode] = useState(false)
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
-  const [activeTab, setActiveTab] = useState("viewer")
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null) 
 
   useEffect(() => {
     if (darkMode) {
@@ -58,7 +43,6 @@ export default function DocumentManagementSystem() {
 
   const handleCardClick = (document: Document) => {
     setSelectedDocument(document)
-    setActiveTab("viewer")
   }
 
   const renderDocumentContent = (document: Document | null) => {
@@ -94,6 +78,7 @@ export default function DocumentManagementSystem() {
         return <div>Unsupported file type</div>
     }
   }
+
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -150,7 +135,7 @@ export default function DocumentManagementSystem() {
         </div>
 
         {/* Document Viewer and Versions */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs defaultValue="viewer" className="w-full">
           <TabsList>
             <TabsTrigger value="viewer">Document Viewer</TabsTrigger>
             <TabsTrigger value="versions">Document Versions</TabsTrigger>
@@ -179,17 +164,11 @@ export default function DocumentManagementSystem() {
                 <CardTitle>Document Versions</CardTitle>
               </CardHeader>
               <CardContent>
-                {selectedDocument ? (
-                  <ul className="space-y-2">
-                    {selectedDocument.versions.map((version, index) => (
-                      <li key={index}>Version {version.version} - Created on {version.date}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400">
-                    Select a document to view its versions
-                  </p>
-                )}
+                <ul className="space-y-2">
+                  <li>Version 1.0 - Created on 2023-04-01</li>
+                  <li>Version 1.1 - Modified on 2023-04-02</li>
+                  <li>Version 1.2 - Modified on 2023-04-15</li>
+                </ul>
               </CardContent>
             </Card>
           </TabsContent>
