@@ -3,6 +3,9 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Upload, FileCheck } from "lucide-react";
+import { Label } from "../ui/Label";
+import { Checkbox } from "../ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import keccak256 from 'keccak256';
 
 // Definir interfaces para documentos y versiones
@@ -48,20 +51,21 @@ export default function UploadDocument() {
     }
   };
 
+  // Crear documento o nueva versión
   const handleUpload = () => {
     if (!file || !documentName || !documentType || !authorName) {
       setMessage('Por favor, completa todos los campos.');
       return;
     }
-  
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const fileData = e?.target?.result;
-  
+
       if (fileData) {
         // Convertir fileData a una cadena antes de generar el hash
         const fileDataString = typeof fileData === 'string' ? fileData : Buffer.from(fileData).toString();
-  
+
         if (isNewVersion && existingDocId) {
           // Agregar nueva versión a un documento existente
           const docIndex = documents.findIndex(doc => doc.documentId === existingDocId);
@@ -96,11 +100,11 @@ export default function UploadDocument() {
           documents.push(newDocument);
           setMessage('Documento creado exitosamente.');
         }
-  
+
         // Generar hash simulado para la demostración
         const simulatedHash = generateHash(fileDataString);
         setHash(simulatedHash);
-  
+
         // Guardar archivo en la carpeta 'uploads'
         saveFile(file);
       }
@@ -119,81 +123,116 @@ export default function UploadDocument() {
   };
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Cargar y Verificar Documento</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {/* Campos para el nombre del documento, tipo y autor */}
-          <Input 
-            type="text" 
-            placeholder="Nombre del documento" 
-            value={documentName} 
-            onChange={(e) => setDocumentName(e.target.value)} 
-          />
-          <Input 
-            type="text" 
-            placeholder="Tipo de documento" 
-            value={documentType} 
-            onChange={(e) => setDocumentType(e.target.value)} 
-          />
-          <Input 
-            type="text" 
-            placeholder="Nombre del autor" 
-            value={authorName} 
-            onChange={(e) => setAuthorName(e.target.value)} 
-          />
-          
-          {/* Checkbox para nueva versión */}
-          <label className="flex items-center space-x-2">
-            <input 
-              type="checkbox" 
-              checked={isNewVersion} 
-              onChange={(e) => setIsNewVersion(e.target.checked)} 
-            />
-            <span>Nueva versión de documento existente</span>
-          </label>
-
-          {/* Select para documentos existentes */}
-          {isNewVersion && (
-            <select 
-              className="border rounded p-2 w-full" 
-              onChange={(e) => setExistingDocId(e.target.value)}
-            >
-              <option value="">Seleccionar documento existente</option>
-              {documents.map((doc) => (
-                <option key={doc.documentId} value={doc.documentId}>
-                  {doc.documentName}
-                </option>
-              ))}
-            </select>
-          )}
-
-          {/* Campo para subir archivo */}
-          <Input type="file" onChange={handleFileChange} />
-
-          {/* Botón para subir documento */}
-          <Button onClick={handleUpload} disabled={!file || !documentName || !documentType || !authorName}>
-            <Upload className="mr-2 h-4 w-4" /> Subir Documento
-          </Button>
-
-          {/* Mensajes de resultado */}
-          {message && <p className="text-sm text-blue-500 mt-2">{message}</p>}
-          
-          {/* Mostrar hash simulado del documento */}
-          {hash && (
-            <div className="mt-4">
-              <p className="text-sm font-medium">Hash del Documento:</p>
-              <p className="text-xs">{hash}</p>
-              <div className="mt-2 flex items-center text-green-600">
-                <FileCheck className="mr-2 h-4 w-4" />
-                <span className="text-sm">Documento verificado en la blockchain (simulado)</span>
-              </div>
-            </div>
-          )}
+    <div className="min-h-screen bg-gray-100">
+      <div className="bg-gray-900 text-white py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+            Document Management System
+          </h1>
+          <p className="mt-6 text-xl max-w-3xl">
+            Carga, gestiona y verifica tus documentos de manera segura y eficiente.
+          </p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Cargar y Verificar Documento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="documentName">Nombre del documento</Label>
+                <Input 
+                  id="documentName"
+                  type="text" 
+                  placeholder="Nombre del documento" 
+                  value={documentName} 
+                  onChange={(e) => setDocumentName(e.target.value)} 
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="documentType">Tipo de documento</Label>
+                <Input 
+                  id="documentType"
+                  type="text" 
+                  placeholder="Tipo de documento" 
+                  value={documentType} 
+                  onChange={(e) => setDocumentType(e.target.value)} 
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="authorName">Nombre del autor</Label>
+                <Input 
+                  id="authorName"
+                  type="text" 
+                  placeholder="Nombre del autor" 
+                  value={authorName} 
+                  onChange={(e) => setAuthorName(e.target.value)} 
+                />
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="isNewVersion" 
+                  checked={isNewVersion} 
+                  onCheckedChange={(checked) => setIsNewVersion(checked as boolean)}
+                />
+                <Label htmlFor="isNewVersion">Nueva versión de documento existente</Label>
+              </div>
+
+              {isNewVersion && (
+                <div className="space-y-2">
+                  <Label htmlFor="existingDoc">Seleccionar documento existente</Label>
+                  <Select onValueChange={setExistingDocId} value={existingDocId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar documento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {documents.map((doc) => (
+                        <SelectItem key={doc.documentId} value={doc.documentId}>
+                          {doc.documentName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="file">Subir archivo</Label>
+                <Input id="file" type="file" onChange={handleFileChange} />
+              </div>
+
+              <Button 
+                onClick={handleUpload} 
+                disabled={!file || !documentName || !documentType || !authorName}
+                className="w-full"
+              >
+                <Upload className="mr-2 h-4 w-4" /> Subir Documento
+              </Button>
+
+              {/* Mensajes de resultado */}
+              {message && <p className="text-sm text-blue-500 mt-2">{message}</p>}
+              
+              {/* Mostrar hash simulado del documento */}
+              {hash && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium">Hash del Documento:</p>
+                  <p className="text-xs">{hash}</p>
+                  <div className="mt-2 flex items-center text-green-600">
+                    <FileCheck className="mr-2 h-4 w-4" />
+                    <span className="text-sm">Documento verificado en la blockchain (simulado)</span>
+                  </div>
+                </div>
+              )}
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
