@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Definimos los tipos de props para cada componente
+// Define the types for props for each component
 type TabsProps = {
   children: React.ReactNode;
-  defaultValue: string;
+  value: string;
+  onValueChange: (value: string) => void;
   className?: string;
 };
 
@@ -14,34 +15,39 @@ type TabsListProps = {
 type TabsTriggerProps = {
   value: string;
   children: React.ReactNode;
-  onClick?: () => void;
-  activeTab?: string; // Add activeTab as an optional prop
 };
 
 type TabsContentProps = {
   value: string;
-  activeTab?: string; // Esta propiedad es opcional, porque solo algunos hijos la necesitarán
   children: React.ReactNode;
 };
 
-export function Tabs({ children, defaultValue, className }: TabsProps) {
-  const [activeTab, setActiveTab] = useState(defaultValue);
+type TabsContextType = {
+  activeTab: string;
+  onTabChange: (value: string) => void;
+};
 
-  const handleTabChange = (value: string) => {
+const TabsContext = createContext<TabsContextType>({
+  activeTab: '',
+  onTabChange: () => {},
+});
+
+export function Tabs({ children, value, onValueChange, className }: TabsProps) {
+  const [activeTab, setActiveTab] = useState(value);
+
+  useEffect(() => {
     setActiveTab(value);
+  }, [value]);
+
+  const handleTabChange = (newValue: string) => {
+    setActiveTab(newValue);
+    onValueChange(newValue);
   };
 
-  // Verificamos si el componente hijo necesita las propiedades adicionales antes de pasárselas
   return (
-    <div className={className}>
-      {React.Children.map(children, (child) => {
-        if (React.isValidElement(child)) {
-          // Validamos que el tipo del hijo sea 'TabsContent' o 'TabsTrigger' antes de pasarle 'activeTab' o 'onTabChange'
-            return React.cloneElement(child, { activeTab, onClick: () => handleTabChange(child.props.value) } as any);
-        }
-        return child;
-      })}
-    </div>
+    <TabsContext.Provider value={{ activeTab, onTabChange: handleTabChange }}>
+      <div className={className}>{children}</div>
+    </TabsContext.Provider>
   );
 }
 
@@ -49,26 +55,23 @@ export function TabsList({ children }: TabsListProps) {
   return <div className="flex space-x-4 border-b border-gray-200 mb-4">{children}</div>;
 }
 
-export function TabsTrigger({ value, children, onClick, activeTab }: TabsTriggerProps & { activeTab?: string }) {
-  const handleClick = () => {
-    if (onClick) onClick();
-  };
-
-  // Evaluamos si el 'activeTab' coincide con el 'value' para determinar si está activo
-  const isActive = activeTab === value;
+export function TabsTrigger({ value, children }: TabsTriggerProps) {
+  const { activeTab, onTabChange } = useContext(TabsContext);
 
   return (
     <button
       className={`px-4 py-2 font-semibold ${
-        isActive ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500'
+        activeTab === value ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500'
       }`}
-      onClick={handleClick}
+      onClick={() => onTabChange(value)}
     >
       {children}
     </button>
   );
 }
 
-export function TabsContent({ value, activeTab, children }: TabsContentProps) {
+export function TabsContent({ value, children }: TabsContentProps) {
+  const { activeTab } = useContext(TabsContext);
+
   return activeTab === value ? <div>{children}</div> : null;
 }
