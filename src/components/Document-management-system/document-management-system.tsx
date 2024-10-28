@@ -146,14 +146,11 @@ export default function DocumentManagementSystem() {
             </Button>
             <Button variant="ghost" className="w-full justify-start">
               <Folder className="mr-2 h-4 w-4" />
-              Control de versiones
-            </Button>
-            <Button variant="ghost" className="w-full justify-start">
-              <Users className="mr-2 h-4 w-4" />
-              Info de usuario
+              <Link to="/version">Control de versiones</Link>
             </Button>
             <Button variant="ghost" className="w-full justify-start">
               <BarChart className="mr-2 h-4 w-4" />
+              <Link to="/report">Reportes</Link>
               Reportes
             </Button>
           </nav>

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -6,9 +7,8 @@ import { Upload, FileCheck } from "lucide-react";
 import { Label } from "../ui/Label";
 import { Checkbox } from "../ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import keccak256 from 'keccak256';
+import { keccak256 } from 'js-sha3'; // Importar keccak256 de js-sha3
 
-// Definir interfaces para documentos y versiones
 interface DocumentVersion {
   documentHash: string;
   modificationDate: string;
@@ -20,106 +20,122 @@ interface Document {
   documentId: string;
   documentName: string;
   documentType: string;
-  authorName: string;
   creationDate: string;
   versions: DocumentVersion[];
 }
 
-// Array para almacenar documentos y versiones
-const documents: Document[] = [];
-
-// Componente para la carga de documentos
 export default function UploadDocument() {
   const [file, setFile] = useState<File | null>(null);
   const [documentName, setDocumentName] = useState('');
   const [documentType, setDocumentType] = useState('');
-  const [authorName, setAuthorName] = useState('');
   const [isNewVersion, setIsNewVersion] = useState(false);
   const [existingDocId, setExistingDocId] = useState('');
   const [hash, setHash] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+  const [documents, setDocuments] = useState<Document[]>([]);
 
-  // Función para generar un hash único
-  const generateHash = (data: any) => {
-    return '0x' + keccak256(data).toString('hex');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    try {
+      const storedDocuments = JSON.parse(localStorage.getItem('documents') || '[]');
+      setDocuments(storedDocuments);
+    } catch (error) {
+      console.error('Error al acceder al localStorage:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('documents', JSON.stringify(documents));
+    } catch (error) {
+      console.error('Error al guardar en localStorage:', error);
+    }
+  }, [documents]);
+
+  // Generar hash usando nombre y tipo del documento
+  const generateHash = (name: string, type: string) => {
+    const data = new TextEncoder().encode(name + type); // Convertir a Uint8Array
+    return '0x' + keccak256(data); // Usar keccak256 de js-sha3
   };
 
-  // Cargar archivo
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setFile(event.target.files[0]);
     }
   };
 
-  // Crear documento o nueva versión
-  const handleUpload = () => {
-    if (!file || !documentName || !documentType || !authorName) {
+  const handleUpload = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+
+    if (!file || !documentName || !documentType) {
       setMessage('Por favor, completa todos los campos.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const fileData = e?.target?.result;
+    // Generar hash usando solo nombre y tipo
+    const documentHash = generateHash(documentName, documentType);
+    if (!documentHash) {
+      console.error('Error al generar el hash del documento.');
+      return;
+    }
 
-      if (fileData) {
-        // Convertir fileData a una cadena antes de generar el hash
-        const fileDataString = typeof fileData === 'string' ? fileData : Buffer.from(fileData).toString();
-
-        if (isNewVersion && existingDocId) {
-          // Agregar nueva versión a un documento existente
-          const docIndex = documents.findIndex(doc => doc.documentId === existingDocId);
-          if (docIndex !== -1) {
-            const newVersion: DocumentVersion = {
-              documentHash: generateHash(fileDataString + Date.now().toString()),
-              modificationDate: new Date().toISOString(),
-              version: `v${documents[docIndex].versions.length + 1}`,
-              state: 'updated'
-            };
-            documents[docIndex].versions.push(newVersion);
-            setMessage(`Nueva versión creada para el documento ${documents[docIndex].documentName}.`);
-          } else {
-            setMessage('Documento no encontrado.');
-          }
-        } else {
-          // Crear nuevo documento
-          const documentId = generateHash(documentName + Date.now().toString());
-          const newDocument: Document = {
-            documentId,
-            documentName,
-            documentType,
-            authorName,
-            creationDate: new Date().toISOString(),
-            versions: [{
-              documentHash: generateHash(fileDataString),
-              modificationDate: new Date().toISOString(),
-              version: 'v1',
-              state: 'active'
-            }]
-          };
-          documents.push(newDocument);
-          setMessage('Documento creado exitosamente.');
-        }
-
-        // Generar hash simulado para la demostración
-        const simulatedHash = generateHash(fileDataString);
-        setHash(simulatedHash);
-
-        // Guardar archivo en la carpeta 'uploads'
-        saveFile(file);
+    let updatedDocuments = [...documents];
+    if (isNewVersion && existingDocId) {
+      const docIndex = updatedDocuments.findIndex(doc => doc.documentId === existingDocId);
+      if (docIndex !== -1) {
+        const newVersion: DocumentVersion = {
+          documentHash,
+          modificationDate: new Date().toISOString(),
+          version: `v${updatedDocuments[docIndex].versions.length + 1}`,
+          state: 'updated'
+        };
+        updatedDocuments[docIndex].versions.push(newVersion);
+        setMessage(`Nueva versión creada para el documento ${updatedDocuments[docIndex].documentName}.`);
+      } else {
+        setMessage('Documento no encontrado.');
+        return;
       }
-    };
-    reader.readAsArrayBuffer(file);
+    } else {
+      const documentId = generateHash(documentName, documentType);
+      const newDocument: Document = {
+        documentId,
+        documentName,
+        documentType,
+        creationDate: new Date().toISOString(),
+        versions: [{
+          documentHash,
+          modificationDate: new Date().toISOString(),
+          version: 'v1',
+          state: 'active'
+        }]
+      };
+      updatedDocuments = [...updatedDocuments, newDocument];
+      setMessage('Documento creado exitosamente.');
+    }
+
+    // Actualizar el estado de documentos
+    setDocuments(updatedDocuments);
+    setHash(documentHash);
+
+    // Guardar archivo en la carpeta
+    await saveFile(file);
+
+    alert('Documento subido exitosamente!');
+    navigate('/');
   };
 
-  // Guardar archivo en la carpeta local 'uploads'
-  const saveFile = (file: File) => {
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(file);
-    link.download = file.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // Guardar archivo en una carpeta
+  const saveFile = async (file: File) => {
+    const folderPath = '/ruta/a/la/carpeta/'; // Cambia esto a la ruta deseada
+    try {
+      const fileData = new Blob([file], { type: file.type });
+      const filePath = `${folderPath}/${file.name}`;
+      // Aquí puedes implementar la lógica para guardar el archivo en el servidor
+      console.log(`Archivo guardado en: ${filePath}`);
+    } catch (error) {
+      console.error('Error al guardar el archivo:', error);
+    }
   };
 
   return (
@@ -164,17 +180,6 @@ export default function UploadDocument() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="authorName">Nombre del autor</Label>
-                <Input 
-                  id="authorName"
-                  type="text" 
-                  placeholder="Nombre del autor" 
-                  value={authorName} 
-                  onChange={(e) => setAuthorName(e.target.value)} 
-                />
-              </div>
-              
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   id="isNewVersion" 
@@ -209,16 +214,14 @@ export default function UploadDocument() {
 
               <Button 
                 onClick={handleUpload} 
-                disabled={!file || !documentName || !documentType || !authorName}
+                disabled={!file || !documentName || !documentType}
                 className="w-full"
               >
                 <Upload className="mr-2 h-4 w-4" /> Subir Documento
               </Button>
 
-              {/* Mensajes de resultado */}
               {message && <p className="text-sm text-blue-500 mt-2">{message}</p>}
               
-              {/* Mostrar hash simulado del documento */}
               {hash && (
                 <div className="mt-4">
                   <p className="text-sm font-medium">Hash del Documento:</p>
